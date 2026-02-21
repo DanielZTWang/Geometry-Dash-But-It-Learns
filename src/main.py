@@ -10,6 +10,10 @@ import pytesseract
 import cv2
 from PIL import ImageGrab
 
+# File pathing
+import os
+from pathlib import Path
+
 # Other
 import numpy as np
 import random
@@ -65,17 +69,29 @@ class GameEnv(Env):
         pass
     
 
+def click(x1, y1):
+    pyautogui.click(x = x1, y = y1)
+
+
+def hold(x1, y1, holdTime):
+    pyautogui.mouseDown()
+    time.sleep(holdTime)
+    pyautogui.mouseUp(x=1200, y=700)
+
+
 def get_percentage():
-    pytesseract.pytesseract.tesseract_cmd ='C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+    
+    filePath = Path("Tesseract-OCR").joinpath("tesseract.exe")
+    pytesseract.pytesseract.tesseract_cmd = filePath.absolute()
     
     while True:
         img = ImageGrab.grab(bbox = (1640, 185, 1870, 245))
 
-        tesstr = pytesseract.image_to_string(
+        percent = pytesseract.image_to_string(
                 cv2.cvtColor(np.array(img), cv2.COLOR_BGR2GRAY), 
                 lang ='eng')
         
-        print('percentage: ' + tesstr)
+        print('percentage: ' + percent)
 
 get_percentage()
 
