@@ -1,0 +1,7 @@
+gymnasium
+stable-baselines3
+opencv-python
+pytesseract
+pyautogui
+numpy
+pillow
