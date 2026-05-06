@@ -74,29 +74,38 @@ class GameEnv(Env):
 
         # Calculate progress made
         raw_progress = self.percent - self.prev_percent
-        progress = max(0.0, raw_progress)
 
-        # Calculate reward
-        reward = progress * 10
+        # Check if the bot has died
+        if (raw_progress < -0.1):
 
-        if (self.percent > self.best_percent):
-            self.best_percent = self.percent
-            reward += 10
+            reward = -10
+            terminated = True
+
+        # Calculate reward otherwise
+        else:
+            progress = max(0.0, raw_progress)
+            reward = progress * 10
+
+            # Reward for new best
+            if (self.percent > self.best_percent):
+                self.best_percent = self.percent
+                reward += 1
+            
+            # Check if bot is stuck or dead
+            if raw_progress <= 0.0001:
+                self.stuck_frames += 1
+            else:
+                self.stuck_frames = 0
+
+            if self.percent >= 100:
+                reward += 100
+                terminated = True
+            elif self.stuck_frames >= self.max_stuck_frames:
+                reward -= 10
+                terminated = True
+            else:
+                terminated = False
         
-        # Check if bot is stuck or dead
-        if raw_progress <= 0.0001:
-            self.stuck_frames += 1
-        else:
-            self.stuck_frames = 0
-
-        if self.percent >= 100:
-            reward += 100
-            terminated = True
-        elif self.stuck_frames >= self.max_stuck_frames:
-            reward -= 10
-            terminated = True
-        else:
-            terminated = False
         
         # Set return values
         truncated = False
@@ -111,6 +120,7 @@ class GameEnv(Env):
     def reset(self, seed = None, options = None):
         super().reset(seed = seed)
         
+        # Makes sure the bot isn't holding down after reset 
         if self.holding:
             pyautogui.mouseUp(x=centerX, y=centerY)
             self.holding = False
@@ -139,7 +149,7 @@ class GameEnv(Env):
         img = ImageGrab.grab(bbox = (1640, 185, 1870, 245)) # NEEDS TO MATCH PERCENTAGE BOX COORDINATES
         inp = pytesseract.image_to_string(
             cv2.cvtColor(np.array(img), cv2.COLOR_RGB2GRAY), 
-            lang ='eng'
+            lang = 'eng'
         ) 
 
         # Clean up the string
@@ -152,5 +162,4 @@ class GameEnv(Env):
         try: percent = float(inp)
         except: percent = self.percent
 
-        print('percentage: ' + str(percent))
         return percent
