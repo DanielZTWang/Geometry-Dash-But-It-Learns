@@ -163,3 +163,9 @@ class GameEnv(Env):
         except: percent = self.percent
 
         return percent
+    
+    def close(self):
+        # Stops holding if the bot is still holding down when the environment is closed
+        if self.holding:
+            pyautogui.mouseUp(x=centerX, y=centerY)
+            self.holding = False

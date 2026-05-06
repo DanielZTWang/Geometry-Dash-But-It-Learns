@@ -17,7 +17,7 @@ obs, info = env.reset()
 print("Starting obs:", obs)
 
 for i in range(1000):
-    # Exit if 'x' is pressed
+    # Allow for manual termination
     if keyboard.is_pressed("x"):
         print("finished")
         break
