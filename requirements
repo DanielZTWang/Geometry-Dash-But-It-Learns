@@ -1,8 +1,7 @@
-gymnasium
-stable-baselines3
-opencv-python
-pytesseract
-pyautogui
 numpy
+pyautogui
+pytesseract
+opencv-python
+mss
 pillow
 keyboard
