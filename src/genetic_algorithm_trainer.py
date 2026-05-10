@@ -41,15 +41,10 @@ def evaluate_population(game, population):
 
     # Evaluate each genome in the population and store its fitness
     for i, genome in enumerate(population):
-        # Check for forced stop
-        if keyboard.is_pressed("x"):
-            print("Training terminated by user.")
-            break
-
         print(f"Testing genome {i + 1}/{len(population)}")
 
         # Run the genome and get its fitness
-        fitness = game.run_genome(genome, max_runtime = 180)
+        fitness = game.run_genome(genome)
         res.append({"genome": genome, "fitness": fitness})
 
         print(f"Fitness: {fitness:.2f}%")

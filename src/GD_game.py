@@ -1,5 +1,6 @@
 # Inputs
 import pyautogui
+import keyboard
 
 # Screen reading
 import pytesseract
@@ -24,6 +25,10 @@ percentageBox = {"left": 1640, "top": 185, "width": 230, "height": 60} # CHANGE 
 # Game environment
 class Game:
     def __init__(self):
+        # Set up tesseract path
+        filePath = Path("Tesseract-OCR").joinpath("tesseract.exe")
+        pytesseract.pytesseract.tesseract_cmd = str(filePath.absolute())
+
         # Create screenshot object
         self.sct = mss.mss()
         
@@ -52,11 +57,13 @@ class Game:
         pyautogui.mouseUp(x=centerX, y=centerY)
 
     def hold(self):
-        pyautogui.mouseDown(x=centerX, y=centerY)
+        if not self.holding:
+            pyautogui.mouseDown(x=centerX, y=centerY)
         self.holding = True
 
     def release(self):
-        pyautogui.mouseUp(x=centerX, y=centerY)
+        if self.holding:
+            pyautogui.mouseUp(x=centerX, y=centerY)
         self.holding = False
     
     def do_action(self, action):
@@ -68,10 +75,6 @@ class Game:
             self.release()
 
     def get_percentage(self):
-        # Set up tesseract path
-        filePath = Path("Tesseract-OCR").joinpath("tesseract.exe")
-        pytesseract.pytesseract.tesseract_cmd = str(filePath.absolute())
-        
         # Reads the percentage as a string
         img = np.array(self.sct.grab(percentageBox))
         inp = pytesseract.image_to_string(
@@ -90,16 +93,20 @@ class Game:
 
         return percent
 
-    def run_genome(self, genome, max_runtime = 180):
-        # Resets the game
+    def run_genome(self, genome):
+        # Reset the game state
         self.reset()
 
         genome = sorted(genome, key = lambda event: event["percent"])
 
         next_event_index = 0
-        start_time = time.time()
         
         while True:
+            # Check for forced stop
+            if keyboard.is_pressed("x"):
+                print("Training terminated by user.")
+                break
+
             # Read current percentage
             self.prev_percent = self.percent
             self.percent = self.get_percentage()
@@ -118,11 +125,6 @@ class Game:
                 self.release()
                 return 100.0
             
-            # Check if bot is stuck
-            if time.time() - start_time > max_runtime:
-                self.release()
-                return self.best_percent
-            
             # Iterate through the genome and perform actions
             while next_event_index < len(genome):
                 # Get the next event
@@ -134,9 +136,6 @@ class Game:
                     next_event_index += 1
                 else:
                     break
-            
-            # Wait for the next frame
-            time.sleep(secondsPerFrame)
 
     def close(self):
         self.release()
