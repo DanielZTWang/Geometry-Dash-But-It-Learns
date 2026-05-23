@@ -1,6 +1,6 @@
 # Game and genome imports
 from GD_game import Game
-from genome import create_random_genome, mutate_genome, crossover
+from genome import create_random_genome, mutate_genome, crossover, create_child
 
 # File managing
 import os
@@ -13,11 +13,11 @@ import keyboard
 import random
 
 # Variables
-population_size = 30
-generations = 1000
-elite_count = 6
+population_size = 10
+generations = 100
+elite_count = 4
 max_events = 20
-max_percent = 100.0
+max_percent = 20.0
 save_path = "genomes/best_genome.json"
 
 def save_genome(genome, fitness, path):
@@ -55,21 +55,27 @@ def evaluate_population(game, population):
     return res
 
 def make_next_generation(res):
-    # Get the elite genomes from the current population
-    elites = res[:elite_count]
+    # Define a threshold for how much of a genome should be saved in relation to best fitness
+    save_threshold = 1 # CHANGE DEPENDING ON LEVEL
 
-    # Keep the elite genomes for the next generation
+    # Produce a population of elite genomes from the previous generation
+    elites = res[:elite_count]
     new_population = [elite["genome"] for elite in elites]
 
     # Mutate the elite genomes until full population
     while len(new_population) < population_size:
         # Select two random elite genomes as parents
-        parent1 = random.choice(elites)["genome"]
-        parent2 = random.choice(elites)["genome"]
+        parent1 = random.choice(elites)
+        parent2 = random.choice(elites)
 
-        # Create a child genome through crossover and mutation
-        child = crossover(parent1, parent2)
-        child = mutate_genome(child, mutation_rate = 0.1, add_rate = 0.15, remove_rate = 0.10, max_percent = max_percent)
+        # Determine the mark to begin mutating the child genome
+        if parent1["fitness"] < parent2["fitness"]:
+            save_mark = max(0, parent1["fitness"] - save_threshold)
+        else:
+            save_mark = max(0, parent2["fitness"] - save_threshold)
+
+        # Create the child genome up to the save mark
+        child = create_child(parent1, parent2, save_mark = save_mark, max_percent = max_percent)
 
         # Append the child genome to the new population
         new_population.append(child)

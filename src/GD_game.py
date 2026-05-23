@@ -111,6 +111,9 @@ class Game:
             self.prev_percent = self.percent
             self.percent = self.get_percentage()
 
+            #print(f"Current percent: {self.percent:.2f}%")
+            #print(f"Previous percent: {self.prev_percent:.2f}%")
+
             # Check if new best percentage is reached
             if self.percent > self.best_percent:
                 self.best_percent = self.percent
@@ -134,8 +137,29 @@ class Game:
                 if self.percent >= event["percent"]:
                     self.do_action(event["action"])
                     next_event_index += 1
-                else:
-                    break
+
+                    print(f"Current percent: {self.prev_percent:.2f}%")
+                    print(f"Executed action: {event['action']} at {event['percent']:.2f}%")
+
+                break
+                
+                # Read current percentage
+                self.prev_percent = self.percent
+                self.percent = self.get_percentage()
+
+                # Check if new best percentage is reached
+                if self.percent > self.best_percent:
+                    self.best_percent = self.percent
+
+                # Check if death has occurred
+                if self.percent < self.prev_percent:
+                    self.release()
+                    return self.best_percent
+                
+                # Check if level is completed
+                if self.percent >= 100:
+                    self.release()
+                    return 100.0
 
     def close(self):
         self.release()
