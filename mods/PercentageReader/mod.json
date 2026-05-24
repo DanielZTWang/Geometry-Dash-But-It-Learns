@@ -13,8 +13,6 @@
 	"description": "",
 	"dependencies": {
 		"geode.node-ids": ">=v1.20.0"
-	},
-    "resources": {
-    }
+	}
 }
 

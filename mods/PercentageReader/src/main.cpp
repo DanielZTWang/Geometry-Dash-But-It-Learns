@@ -8,41 +8,73 @@
 using namespace geode::prelude;
 
 static std::filesystem::path getOutputPath() {
-    return Mod::get()->getSaveDir() / "gd_percent.txt";
+	// Gets the output path for data
+    auto dir = std::filesystem::path(
+        "C:/Users/pakou/OneDrive/Documents/GitHub/Geometry-Dash-But-It-Learns" //REPLACE WITH OUTPUT PATH
+    );
+
+	// Create the directory if it doesn't exist and return the path to the output file
+    std::filesystem::create_directories(dir);
+    return dir / "gd_data.txt";
 }
 
-static void writeState(float percent, bool dead, bool completed) {
+static void writeState(std::string percent, bool dead, bool completed) {
+	// Get the output file
     std::ofstream file(getOutputPath(), std::ios::trunc);
 
+	// Check if file exists
     if (!file.is_open()) {
         return;
     }
 
+	// Write the current status to file
     file << percent << ","
          << (dead ? "dead" : "alive") << ","
          << (completed ? "complete" : "incomplete");
 }
 
 class $modify(MyPlayLayer, PlayLayer) {
+	// Write starting game data to file
+	bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
+        if (!PlayLayer::init(level, useReplay, dontCreateObjects)) {
+            return false;
+        }
 
-	struct Fields {
-		CCSprite* m_bgSprite;
-	};
+        writeState("0.0", false, false);
 
-	bool init(GJGameLevel* p0, bool p1, bool p2) {
-		if (!PlayLayer::init(p0, p1, p2)) {
-			return false;
+        return true;
+    }
+
+	// Write data to file after each update
+	void postUpdate(float dt) {
+        PlayLayer::postUpdate(dt);
+
+		std::string percent = "0.0";
+
+		if (this->m_percentageLabel) {
+			percent = this->m_percentageLabel->getString();
+
+			if (!percent.empty() && percent.back() == '%') {
+				percent.pop_back();
+			}
 		}
 
-		CCMenu* menu = CCMenu::create();
+		bool completed = this->m_hasCompletedLevel;
 
-		m_fields->m_bgSprite = CCSprite::create("bg.png"_spr);
-		m_fields->m_bgSprite->setAnchorPoint({0.0f, 1.0f});
-		m_fields->m_bgSprite->setPosition(ccp(390, 320));
-		m_fields->m_bgSprite->setVisible(true);
+		writeState(percent, false, completed);
+    }
 
-		this->addChild(m_fields->m_bgSprite);
+	// Update death status
+    void destroyPlayer(PlayerObject* player, GameObject* object) {
+        writeState("0.0", true, false);
 
-		return true;
-	}
+        PlayLayer::destroyPlayer(player, object);
+    }
+
+	// Reset data state
+    void resetLevel() {
+        PlayLayer::resetLevel();
+
+        writeState("0.0", false, false);
+    }
 };
