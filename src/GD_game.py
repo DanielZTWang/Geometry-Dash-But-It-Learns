@@ -2,11 +2,6 @@
 import pyautogui
 import keyboard
 
-# Screen reading
-import pytesseract
-import cv2
-import mss
-
 # File pathing
 from pathlib import Path
 
@@ -15,26 +10,16 @@ import numpy as np
 import time
 
 # Variables
-framesPerSecond = 240 # CHANGE TO MATCH GAME FPS
-secondsPerFrame = 1 / framesPerSecond
-screenWidth, screenHeight = pyautogui.size()
-centerX = screenWidth // 2
-centerY = screenHeight // 2
-percentageBox = {"left": 1640, "top": 185, "width": 230, "height": 60} # CHANGE TO MATCH PERCENTAGE BOX COORDINATES
+frames_per_second = 240 # CHANGE TO MATCH GAME FPS
+seconds_per_frame = 1 / frames_per_second
+percent_file = Path("gd_data.txt")
 
 # Game environment
 class Game:
     def __init__(self):
-        # Set up tesseract path
-        filePath = Path("Tesseract-OCR").joinpath("tesseract.exe")
-        pytesseract.pytesseract.tesseract_cmd = str(filePath.absolute())
-
-        # Create screenshot object
-        self.sct = mss.mss()
-        
         # Set starting values
+        self.status = ()
         self.percent = 0.0
-        self.prev_percent = 0.0
         self.best_percent = 0.0
         self.holding = False
 
@@ -47,23 +32,23 @@ class Game:
         time.sleep(0.05)
 
         # Read starting percentage
-        self.percent = self.get_percentage()
-        self.prev_percent = self.percent
+        self.status = self.get_status()
+        self.percent = self.status[0]
         self.best_percent = self.percent
     
     def tap(self):
-        pyautogui.mouseDown(x=centerX, y=centerY)
+        pyautogui.mouseDown()
         time.sleep(0.01)
-        pyautogui.mouseUp(x=centerX, y=centerY)
+        pyautogui.mouseUp()
 
     def hold(self):
         if not self.holding:
-            pyautogui.mouseDown(x=centerX, y=centerY)
+            pyautogui.mouseDown()
         self.holding = True
 
     def release(self):
         if self.holding:
-            pyautogui.mouseUp(x=centerX, y=centerY)
+            pyautogui.mouseUp()
         self.holding = False
     
     def do_action(self, action):
@@ -74,24 +59,18 @@ class Game:
         elif action == "release":
             self.release()
 
-    def get_percentage(self):
-        # Reads the percentage as a string
-        img = np.array(self.sct.grab(percentageBox))
-        inp = pytesseract.image_to_string(
-            cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY),
-            lang = "eng",
-            config = "--psm 7 -c tessedit_char_whitelist=0123456789.%"
-        )
+    def get_status(self):
+        try:
+            # Reads the information and splits it into percentage, death, and completion status
+            inp = percent_file.read_text().strip()
+            perc_str, death_str, comp_str = inp.split(",")
 
-        # Clean up the string
-        inp = inp.strip().replace('%', '').replace('O', '0').replace('o', '0')
-        inp = "".join(char for char in inp if char.isdigit() or char == ".")
+            # Parses the information and returns it
+            return (float(perc_str), death_str == "dead", comp_str == "complete")
 
-        # Convert string percent to float
-        try: percent = float(inp)
-        except: percent = self.percent
-
-        return percent
+        except Exception:
+            return (self.percent, False, False)
+        
 
     def run_genome(self, genome):
         # Reset the game state
@@ -107,24 +86,21 @@ class Game:
                 print("Training terminated by user.")
                 break
 
-            # Read current percentage
-            self.prev_percent = self.percent
-            self.percent = self.get_percentage()
-
-            #print(f"Current percent: {self.percent:.2f}%")
-            #print(f"Previous percent: {self.prev_percent:.2f}%")
+            # Read current data
+            status = self.get_status()
+            self.percent = status[0]
 
             # Check if new best percentage is reached
             if self.percent > self.best_percent:
                 self.best_percent = self.percent
 
             # Check if death has occurred
-            if self.percent < self.prev_percent:
+            if status[1]:
                 self.release()
                 return self.best_percent
             
             # Check if level is completed
-            if self.percent >= 100:
+            if status[2]:
                 self.release()
                 return 100.0
             
@@ -138,28 +114,10 @@ class Game:
                     self.do_action(event["action"])
                     next_event_index += 1
 
-                    print(f"Current percent: {self.prev_percent:.2f}%")
+                    print(f"Current percent: {self.percent:.2f}%")
                     print(f"Executed action: {event['action']} at {event['percent']:.2f}%")
 
                 break
-                
-                # Read current percentage
-                self.prev_percent = self.percent
-                self.percent = self.get_percentage()
-
-                # Check if new best percentage is reached
-                if self.percent > self.best_percent:
-                    self.best_percent = self.percent
-
-                # Check if death has occurred
-                if self.percent < self.prev_percent:
-                    self.release()
-                    return self.best_percent
-                
-                # Check if level is completed
-                if self.percent >= 100:
-                    self.release()
-                    return 100.0
 
     def close(self):
         self.release()

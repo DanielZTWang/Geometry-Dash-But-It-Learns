@@ -1,6 +1,6 @@
 # Game and genome imports
 from GD_game import Game
-from genome import create_random_genome, mutate_genome, crossover, create_child
+from genome import create_random_genome, create_child
 
 # File managing
 import os

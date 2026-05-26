@@ -69,3 +69,5 @@ __pycache__/
 
 # Data output path
 gd_data.txt
+
+backups
