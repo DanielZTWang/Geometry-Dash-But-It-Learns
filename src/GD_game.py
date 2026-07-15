@@ -6,7 +6,6 @@ import keyboard
 from pathlib import Path
 
 # Other
-import numpy as np
 import time
 
 # Variables
