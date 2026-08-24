@@ -1,1 +1,1 @@
-Saves status data to file for programs to read.
+Saves current player/level status to a file for programs to read.
