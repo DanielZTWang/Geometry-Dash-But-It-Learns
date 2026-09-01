@@ -3,7 +3,7 @@ from config import ACTIONS
 import random
 import copy
 
-def create_random_genome(max_events, max_percent):
+def create_random_genome(max_events, min_percent, max_percent):
     """
     Create a random genome.
 
@@ -20,6 +20,7 @@ def create_random_genome(max_events, max_percent):
 
     Args:
         max_events: The maximum number of events the genome can contain.
+        min_percent: The lowest percentage where random events can be placed.
         max_percent: The highest percentage where random events can be placed.
 
     Returns:
@@ -29,7 +30,7 @@ def create_random_genome(max_events, max_percent):
 
     for _ in range(random.randint(1, max_events)):
         event = {
-            "percent": round(random.uniform(0, max_percent), 1),
+            "percent": round(random.uniform(min_percent, max_percent), 1),
             "action": random.choice(ACTIONS)
         }
         genome.append(event)
@@ -100,7 +101,7 @@ def add_events(genome, low, high):
     Returns:
         The genome with new random events added.
     """
-    for _ in range(random.randint(1, 15)):
+    for _ in range(random.randint(1, 20)):
         genome.append({
             "percent": round(random.uniform(low, high), 1),
             "action": random.choice(ACTIONS)

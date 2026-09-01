@@ -1,6 +1,6 @@
 from GD_game import Game
 from genome import create_random_genome, create_child
-from config import POPULATION_SIZE, GENERATIONS, MAX_EVENTS, INITIAL_MAX_PERCENT, MUTATION_RANGE, SAVE_PATH
+from config import POPULATION_SIZE, GENERATIONS, MAX_EVENTS, INITIAL_START_PERCENT, INITIAL_MAX_PERCENT, MUTATION_RANGE, SAVE_PATH
 
 import os
 import json
@@ -62,6 +62,9 @@ def evaluate_population(game, population):
         fitness = game.run_genome(genome)
         res.append({"genome": genome, "fitness": fitness})
 
+        if fitness == 100:
+            return res
+
         print(f"Fitness: {fitness:.2f}%")
         print("Genome:", genome)
         print("-" * 40)
@@ -103,7 +106,7 @@ def make_next_generation(res):
         A new population of genomes.
     """
     best_genome = res[0]
-    new_population = []
+    new_population = [best_genome["genome"]]
 
     return generate_population(new_population, best_genome)
 
@@ -137,9 +140,9 @@ def process_choice(choice):
             The genome with the best known fitness, or None.
     """
     if choice == 'n':
-        population = [create_random_genome(MAX_EVENTS, INITIAL_MAX_PERCENT) for _ in range(POPULATION_SIZE)]
+        population = [create_random_genome(MAX_EVENTS, INITIAL_START_PERCENT, INITIAL_START_PERCENT + INITIAL_MAX_PERCENT) for _ in range(POPULATION_SIZE)]
             
-        best_overall_fitness = 0.0
+        best_overall_fitness = INITIAL_START_PERCENT
         best_overall_genome = None
 
     else:
@@ -148,9 +151,9 @@ def process_choice(choice):
         if loaded_data is None:
             print("No saved genome found.")
             
-            population = [create_random_genome(MAX_EVENTS, INITIAL_MAX_PERCENT) for _ in range(POPULATION_SIZE)]
+            population = [create_random_genome(MAX_EVENTS, INITIAL_START_PERCENT, INITIAL_START_PERCENT + INITIAL_MAX_PERCENT) for _ in range(POPULATION_SIZE)]
                         
-            best_overall_fitness = 0.0
+            best_overall_fitness = INITIAL_START_PERCENT
             best_overall_genome = None
         else:
             genome, fitness = loaded_data
@@ -187,6 +190,11 @@ def main():
         print("Invalid input.")
 
     population, best_overall_fitness, best_overall_genome = process_choice(choice)
+
+    print("Press \"z\" to start training.")
+    while True:
+        if keyboard.is_pressed("z"):
+            break
 
     try:
         for generation in range(1, GENERATIONS + 1):
