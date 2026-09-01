@@ -8,9 +8,6 @@ from pathlib import Path
 # Other
 import time
 
-# Variables
-frames_per_second = 240 # CHANGE TO MATCH GAME FPS
-seconds_per_frame = 1 / frames_per_second
 percent_file = Path("gd_data.txt")
 
 # Game environment
@@ -37,17 +34,21 @@ class Game:
     
     def tap(self):
         pyautogui.mouseDown()
-        time.sleep(0.01)
+        time.sleep(0.005)
         pyautogui.mouseUp()
+
+        self.holding = False
 
     def hold(self):
         if not self.holding:
             pyautogui.mouseDown()
+
         self.holding = True
 
     def release(self):
         if self.holding:
             pyautogui.mouseUp()
+
         self.holding = False
     
     def do_action(self, action):
@@ -72,7 +73,6 @@ class Game:
         
 
     def run_genome(self, genome):
-        # Reset the game state
         self.reset()
 
         genome = sorted(genome, key = lambda event: event["percent"])
@@ -108,15 +108,16 @@ class Game:
                 # Get the next event
                 event = genome[next_event_index]
 
+                if status[1]:
+                    self.release()
+                    return self.best_percent
+
                 # Execute event and move to next event if percentage threshold is met
                 if self.percent >= event["percent"]:
                     self.do_action(event["action"])
                     next_event_index += 1
-
-                    print(f"Current percent: {self.percent:.2f}%")
-                    print(f"Executed action: {event['action']} at {event['percent']:.2f}%")
-
-                break
+                else:
+                    break
 
     def close(self):
         self.release()

@@ -9,19 +9,14 @@ import json
 # Input checking
 import keyboard
 
-# Other
-import random
-
 # Variables
 population_size = 10
-generations = 100
-elite_count = 4
+generations = 1000
 max_events = 20
-max_percent = 20.0
+save_threshold = 1.5 # CHANGE DEPENDING ON LEVEL
 save_path = "genomes/best_genome.json"
 
 def save_genome(genome, fitness, path):
-    # Save the genome and its fitness to a JSON file
     with open(path, "w") as f:
         json.dump({"fitness": fitness, "genome": genome}, f, indent = 4)
 
@@ -52,38 +47,25 @@ def evaluate_population(game, population):
         print("-" * 40)
     
     res.sort(key = lambda item: item["fitness"], reverse = True)
+
     return res
 
-def make_next_generation(res):
-    # Define a threshold for how much of a genome should be saved in relation to best fitness
-    save_threshold = 1 # CHANGE DEPENDING ON LEVEL
-
-    # Produce a population of elite genomes from the previous generation
-    elites = res[:elite_count]
-    new_population = [elite["genome"] for elite in elites]
-
-    # Mutate the elite genomes until full population
+def generate_population(new_population, elite):
     while len(new_population) < population_size:
-        # Select two random elite genomes as parents
-        parent1 = random.choice(elites)
-        parent2 = random.choice(elites)
+        save_mark = max(0, elite["fitness"] - save_threshold)
 
-        # Determine the mark to begin mutating the child genome
-        if parent1["fitness"] < parent2["fitness"]:
-            save_mark = max(0, parent1["fitness"] - save_threshold)
-        else:
-            save_mark = max(0, parent2["fitness"] - save_threshold)
-
-        # Create the child genome up to the save mark
-        child = create_child(parent1, parent2, save_mark = save_mark, max_percent = max_percent)
-
-        # Append the child genome to the new population
+        child = create_child(elite, save_mark, elite["fitness"] + save_threshold)
         new_population.append(child)
 
     return new_population
 
+def make_next_generation(res):
+    elite = res[0]
+    new_population = []
+
+    return generate_population(new_population, elite)
+
 def main():
-    # Create a genome folder
     os.makedirs("genomes", exist_ok = True)
 
     # Initialize the game
@@ -95,7 +77,7 @@ def main():
             break
 
     # Create the initial random population
-    population = [create_random_genome(max_events, max_percent) for _ in range(population_size)]
+    population = [create_random_genome(max_events, 10) for _ in range(population_size)]
     
     # Initialize fitness and genome tracking variables
     best_overall_fitness = 0.0
@@ -136,8 +118,10 @@ def main():
             # Create the next generation of genomes
             population = make_next_generation(res)
     finally:
+        print("Completed training")
         game.close()
+        exit()
     
 if __name__ == "__main__":
     main()
-    # python src/genetic_algorithm_trainer.py
+    # python src/genetic_algorithm_trainer.py x

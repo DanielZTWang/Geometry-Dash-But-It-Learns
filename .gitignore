@@ -69,3 +69,4 @@ __pycache__/
 
 # Data output path
 gd_data.txt
+genomes/best_genome.json
