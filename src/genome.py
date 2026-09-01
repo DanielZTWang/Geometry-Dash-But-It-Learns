@@ -1,10 +1,7 @@
-# Imports
+from config import ACTIONS
+
 import random
 import copy
-
-# Define possible actions
-#actions = ["tap"]
-actions = ["tap", "hold", "release"]
 
 def create_random_genome(max_events, max_percent):
     genome = []
@@ -13,7 +10,7 @@ def create_random_genome(max_events, max_percent):
     for _ in range(random.randint(1, max_events)):
         event = {
             "percent": round(random.uniform(0, max_percent), 1),
-            "action": random.choice(actions)
+            "action": random.choice(ACTIONS)
         }
         genome.append(event)
     
@@ -58,7 +55,7 @@ def add_events(genome, low, high):
     for _ in range(random.randint(1, 15)):
         genome.append({
             "percent": round(random.uniform(low, high), 1),
-            "action": random.choice(actions)
+            "action": random.choice(ACTIONS)
         })
 
     return genome
@@ -72,13 +69,13 @@ def mutate_tail(min_percent, max_percent):
     
     return fix_genome(new_tail)
 
-def create_child(elite, save_mark, max_percent):
+def create_child(best_genome, save_mark, max_percent):
     child = []
     
     # Save events up to the save mark
     cur_event = 0
-    while cur_event < len(elite["genome"]) and elite["genome"][cur_event]["percent"] <= save_mark:
-        child.append(copy.deepcopy(elite["genome"][cur_event]))
+    while cur_event < len(best_genome["genome"]) and best_genome["genome"][cur_event]["percent"] <= save_mark:
+        child.append(copy.deepcopy(best_genome["genome"][cur_event]))
         cur_event += 1
 
     mutated_tail = mutate_tail(save_mark, max_percent)

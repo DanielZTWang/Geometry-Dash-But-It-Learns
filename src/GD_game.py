@@ -1,16 +1,9 @@
-# Inputs
+from config import DATA_FILE
+
 import pyautogui
 import keyboard
-
-# File pathing
-from pathlib import Path
-
-# Other
 import time
 
-percent_file = Path("gd_data.txt")
-
-# Game environment
 class Game:
     def __init__(self):
         # Set starting values
@@ -62,7 +55,7 @@ class Game:
     def get_status(self):
         try:
             # Reads the information and splits it into percentage, death, and completion status
-            inp = percent_file.read_text().strip()
+            inp = DATA_FILE.read_text().strip()
             perc_str, death_str, comp_str = inp.split(",")
 
             # Parses the information and returns it
@@ -70,13 +63,42 @@ class Game:
 
         except Exception:
             return (self.percent, False, False)
+
+    def check_if_new_best(self):
+        if self.percent > self.best_percent:
+            self.best_percent = self.percent
+
+    def check_status(self, status):
+        # Check if death has occurred
+        if status[1]:
+            self.release()
+            return self.best_percent
         
+        # Check if level is completed
+        if status[2]:
+            self.release()
+            return 100.0
+
+        return -1
+
+    def execute_events(self, genome, next_event_index):
+        # Iterate through the genome and perform actions
+        while next_event_index < len(genome):
+            event = genome[next_event_index]
+
+            # Execute event and move to next event if percentage threshold is met
+            if self.percent >= event["percent"]:
+                self.do_action(event["action"])
+                next_event_index += 1
+            else:
+                break
+
+        return next_event_index
 
     def run_genome(self, genome):
         self.reset()
 
         genome = sorted(genome, key = lambda event: event["percent"])
-
         next_event_index = 0
         
         while True:
@@ -85,39 +107,16 @@ class Game:
                 print("Training terminated by user.")
                 break
 
-            # Read current data
             status = self.get_status()
             self.percent = status[0]
 
-            # Check if new best percentage is reached
-            if self.percent > self.best_percent:
-                self.best_percent = self.percent
+            self.check_if_new_best()
 
-            # Check if death has occurred
-            if status[1]:
-                self.release()
-                return self.best_percent
+            res = self.check_status(status)
+            if res != -1:
+                return res
             
-            # Check if level is completed
-            if status[2]:
-                self.release()
-                return 100.0
-            
-            # Iterate through the genome and perform actions
-            while next_event_index < len(genome):
-                # Get the next event
-                event = genome[next_event_index]
-
-                if status[1]:
-                    self.release()
-                    return self.best_percent
-
-                # Execute event and move to next event if percentage threshold is met
-                if self.percent >= event["percent"]:
-                    self.do_action(event["action"])
-                    next_event_index += 1
-                else:
-                    break
+            next_event_index = self.execute_events(genome, next_event_index)
 
     def close(self):
         self.release()
