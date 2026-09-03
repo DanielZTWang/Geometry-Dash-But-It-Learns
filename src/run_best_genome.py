@@ -50,9 +50,9 @@ def main():
             break
 
     try:
-        result = 0
+        result = 0.0
 
-        while result < 100:
+        while result < 100.0:
             result = game.run_genome(genome)
             print(f"Run finished. Reached: {result:.2f}%")
 

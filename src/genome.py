@@ -89,7 +89,7 @@ def fix_genome(genome):
 
     return fixed_genome
 
-def add_events(genome, low, high):
+def add_events(genome, max_events, low, high):
     """
     Add random events to a genome within a percentage range.
 
@@ -101,7 +101,7 @@ def add_events(genome, low, high):
     Returns:
         The genome with new random events added.
     """
-    for _ in range(random.randint(1, 20)):
+    for _ in range(random.randint(0, max_events)):
         genome.append({
             "percent": round(random.uniform(low, high), 1),
             "action": random.choice(ACTIONS)
@@ -109,7 +109,7 @@ def add_events(genome, low, high):
 
     return genome
 
-def mutate_tail(min_percent, max_percent):
+def mutate_tail(max_events, min_percent, max_percent):
     """
     Generate a new random genome tail within a mutation range.
 
@@ -128,11 +128,11 @@ def mutate_tail(min_percent, max_percent):
     mutate_hi = min(100.0, max_percent)
 
     new_tail = []
-    new_tail = add_events(new_tail, mutate_lo, mutate_hi)
+    new_tail = add_events(new_tail, max_events, mutate_lo, mutate_hi)
     
     return fix_genome(new_tail)
 
-def create_child(best_genome, save_mark, max_percent):
+def create_child(best_genome, max_events, save_mark, max_percent):
     """
     Create a child genome from the current best genome.
 
@@ -159,7 +159,7 @@ def create_child(best_genome, save_mark, max_percent):
         child.append(copy.deepcopy(best_genome["genome"][cur_event]))
         cur_event += 1
 
-    mutated_tail = mutate_tail(save_mark, max_percent)
+    mutated_tail = mutate_tail(max_events, save_mark, max_percent)
     child.extend(mutated_tail)
 
     return fix_genome(child)

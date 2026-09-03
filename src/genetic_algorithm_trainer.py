@@ -62,7 +62,7 @@ def evaluate_population(game, population):
         fitness = game.run_genome(genome)
         res.append({"genome": genome, "fitness": fitness})
 
-        if fitness == 100:
+        if fitness == 100.0:
             return res
 
         print(f"Fitness: {fitness:.2f}%")
@@ -90,7 +90,7 @@ def generate_population(new_population, best_genome):
     while len(new_population) < POPULATION_SIZE:
         save_mark = max(0, best_genome["fitness"] - MUTATION_RANGE)
 
-        child = create_child(best_genome, save_mark, best_genome["fitness"] + MUTATION_RANGE)
+        child = create_child(best_genome, MAX_EVENTS, save_mark, best_genome["fitness"] + MUTATION_RANGE)
         new_population.append(child)
 
     return new_population
